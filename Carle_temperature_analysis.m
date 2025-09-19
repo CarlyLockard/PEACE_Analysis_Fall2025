@@ -429,13 +429,67 @@ clc;
 
 cd('S:\PHTx\Phantoms\Final phantoms\Carle scans and results\2023_FinalPhantoms_temperature');
 %% For 1.5T
-load('1pt5T_measurements.mat');
+load('1pt5T_measurements.mat'); 
 
 % add code to do the items above
 
+%table for slope, y-intercept, and r^2 for T1 long means
+quant_t1long_115t = quantify(T1long_means_all, temperature_array, "T1 long")
+quant_t1short_115t = quantify(T1short_means_all, temperature_array, "T1 short")
+quant_t2_115t = quantify(T2_means_all, temperature_array, "T2")
 
 %% For 3T
 load('3T_measurements.mat');
 
 % add code to do the items above
+quant_t1long_3t = quantify(T1long_means_all, temperature_array, "T1 long")
+quant_t1short_3t = quantify(T1short_means_all, temperature_array, "T1 short")
+quant_t2_3t = quantify(T2_means_all, temperature_array, "T2")
+%%
+function table_all = quantify(file_name, file_name2, ylab)
+    tube = [];
+    slope = [];
+    y_intercept = [];
+    Rsq2 = [];
+    min_max1821 = [];
+    min_max2022 = [];
+    min_max1825 = [];
+    for c = 1:6
+        temp = file_name2';
+        t1_long1 = file_name(c, :)';
+     
+        X = [ones(length(temp),1) temp];
+        slope1 = X\t1_long1;
+        slope2 = slope1(2,1);
+        y_int = slope1(1,1);
+        
+        x_calc = (slope2*X(:, 2))+y_int;
+        
+        r2 = 1 - sum((t1_long1 - x_calc).^2)/sum((t1_long1 - mean(t1_long1)).^2);
+        
 
+        scatter(temp, t1_long1)
+        plot(X(:, 2), x_calc)
+        hold on;
+        legend("Tube 1", "", "Tube 2", "", "Tube 3", "", "Tube 4", "", "Tube 5", "", "Tube 6", "", "Location", "northeastoutside")
+        xlabel("temperature")
+        ylabel(ylab)
+
+    
+        min_18 = (slope2*18) + y_int;
+        max_21 = (slope2*21) + y_int;
+        min_20 = (slope2*20) + y_int;
+        max_22 = (slope2*22) + y_int;
+        max_25 = (slope2*25) + y_int;
+    
+        tube = [tube; c];
+        slope = [slope; slope2];
+        y_intercept = [y_intercept; y_int];
+        Rsq2 = [Rsq2; r2];
+        min_max1821 = [min_max1821; min_18, max_21];
+        min_max2022 = [min_max2022; min_20, max_22];
+        min_max1825 = [min_max1825; min_18, max_25];
+    end
+    hold off;
+    table_all = table(tube, slope, y_intercept, Rsq2, min_max1821, min_max2022, min_max1825)
+end
